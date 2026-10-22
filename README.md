@@ -51,7 +51,7 @@ Certificate fraud and the inability to instantly verify academic credentials wit
 |----------|--------|------------------------|
 | Blockchain | Ethereum / Sepolia | Polygon, Hyperledger Fabric |
 | Token standard | ERC-721 | ERC-1155, custom struct |
-| Frontend | Next.js | React + Vite, plain HTML |
+| Frontend | plain html,css,Js|
 | Smart contract toolchain | Foundry | Hardhat |
 | Metadata storage | IPFS | Arweave, on-chain JSON |
 
