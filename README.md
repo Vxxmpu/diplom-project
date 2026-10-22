@@ -37,7 +37,7 @@ Certificate fraud and the inability to instantly verify academic credentials wit
 - ERC-721 NFT certificates with on-chain metadata
 - DAO-governed issuer registry (multi-issuer support)
 - On-chain certificate revocation
-- Next.js frontend with ethers.js integration
+- Frontend with ethers.js integration
 - Foundry toolchain for smart contract development and testing
 - IPFS for certificate metadata storage
 
