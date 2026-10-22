@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CertChain — Decentralized Certificate Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink:     #0F1923;
+  --ink2:    #364152;
+  --muted:   #7C8DA0;
+  --border:  #E2E8F0;
+  --bg:      #F8FAFC;
+  --white:   #FFFFFF;
+  --teal:    #0EA5A0;
+  --teal-lt: #E6F7F7;
+  --teal-dk: #0C8A85;
+  --amber:   #F59E0B;
+  --red:     #EF4444;
+  --green:   #10B981;
+  --seal:    #1E3A5F;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── NAV ──────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 2rem; height: 60px; gap: 2rem;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem; color: var(--seal); letter-spacing: -0.02em;
+  text-decoration: none; flex-shrink: 0;
+}
+.brand-icon {
+  width: 32px; height: 32px; background: var(--teal);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; color: white; font-size: 1rem;
+}
+.nav-tabs { display: flex; gap: 0.25rem; flex: 1; }
+.nav-tab {
+  font-size: 0.875rem; font-weight: 500; color: var(--muted);
+  background: none; border: none; padding: 0.4rem 0.9rem;
+  border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.nav-tab:hover { color: var(--ink); background: var(--bg); }
+.nav-tab.active { color: var(--teal); background: var(--teal-lt); }
+.nav-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+.network-pill {
+  font-size: 0.75rem; color: var(--teal); background: var(--teal-lt);
+  border: 1px solid #B2E4E3; padding: 0.2rem 0.65rem; border-radius: 100px;
+}
+.btn-wallet {
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+  background: var(--seal); color: white; border: none;
+  padding: 0.45rem 1rem; border-radius: 7px; cursor: pointer; transition: background 0.15s;
+}
+.btn-wallet:hover { background: #152d4d; }
+.btn-wallet.connected {
+  background: var(--teal-lt); color: var(--teal);
+  border: 1px solid #B2E4E3;
+}
+
+/* ── PAGES ───────────────────────────────────────── */
+.page { display: none; padding: 2.5rem 2rem; max-width: 1000px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── VERIFY PAGE ─────────────────────────────────── */
+.verify-hero {
+  text-align: center; padding: 3rem 1rem 2.5rem;
+}
+.verify-hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--seal); line-height: 1.15; margin-bottom: 0.75rem;
+}
+.verify-hero p {
+  color: var(--muted); font-size: 1rem; max-width: 460px; margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+.verify-box {
+  max-width: 520px; margin: 0 auto;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.75rem;
+  box-shadow: 0 2px 16px rgba(15,25,35,0.06);
+}
+.verify-box label { font-size: 0.8rem; font-weight: 500; color: var(--ink2); display: block; margin-bottom: 0.4rem; }
+.verify-input-row { display: flex; gap: 0.6rem; }
+.verify-input-row input {
+  flex: 1; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 0.65rem 0.9rem; outline: none; color: var(--ink);
+  transition: border-color 0.15s;
+}
+.verify-input-row input:focus { border-color: var(--teal); }
+.verify-input-row input::placeholder { color: var(--muted); }
+.btn-verify {
+  font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 500;
+  background: var(--teal); color: white; border: none;
+  padding: 0.65rem 1.4rem; border-radius: 8px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.btn-verify:hover { background: var(--teal-dk); }
+.verify-divider { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 1rem 0; }
+
+/* Result card */
+.cert-result {
+  margin-top: 1.5rem; display: none;
+  border: 1.5px solid var(--teal); border-radius: 12px; overflow: hidden;
+}
+.cert-result.show { display: block; }
+.cert-result-header {
+  background: var(--seal); padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.cert-seal {
+  width: 48px; height: 48px; background: var(--teal); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.cert-result-header h3 { color: white; font-size: 1.05rem; font-weight: 600; margin-bottom: 2px; }
+.cert-result-header span { color: #9DB8D4; font-size: 0.8rem; }
+.status-valid {
+  margin-left: auto; background: #10B981; color: white;
+  font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.65rem;
+  border-radius: 100px; display: flex; align-items: center; gap: 0.3rem;
+}
+.cert-result-body { background: white; padding: 1.25rem 1.5rem; }
+.cert-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 1rem; }
+.cert-meta-item {}
+.cert-meta-item .meta-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 2px; }
+.cert-meta-item .meta-value { font-size: 0.875rem; font-weight: 500; color: var(--ink); }
+.cert-result-footer {
+  border-top: 1px solid var(--border); padding: 0.9rem 1.5rem;
+  display: flex; gap: 0.6rem; background: var(--bg);
+}
+.btn-sm {
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+  border: 1px solid var(--border); background: white; color: var(--ink2);
+  padding: 0.4rem 0.9rem; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.btn-sm:hover { border-color: var(--teal); color: var(--teal); }
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 1rem; margin: 2.5rem auto; max-width: 520px;
+}
+.stat-card {
+  flex: 1; background: white; border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.25rem; text-align: center;
+}
+.stat-card .s-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--seal); }
+.stat-card .s-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+/* ── ISSUER PAGE ──────────────────────────────────── */
+.page-header { margin-bottom: 2rem; }
+.page-header h2 {
+  font-family: 'DM Serif Display', serif; font-size: 1.75rem;
+  color: var(--seal); margin-bottom: 0.3rem;
+}
+.page-header p { color: var(--muted); font-size: 0.9rem; }
+
+.form-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.75rem; margin-bottom: 2rem;
+  box-shadow: 0 1px 8px rgba(15,25,35,0.04);
+}
+.form-card h3 { font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 0.78rem; font-weight: 500; color: var(--ink2); }
+.form-group input, .form-group select, .form-group textarea {
+  font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--ink);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 0.6rem 0.85rem; outline: none; transition: border-color 0.15s; background: white;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--teal); }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; justify-content: flex-end; }
+.btn-primary {
+  font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 500;
+  background: var(--teal); color: white; border: none;
+  padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--teal-dk); }
+.btn-ghost {
+  font-family: 'Inter', sans-serif; font-size: 0.875rem;
+  background: none; color: var(--muted); border: 1px solid var(--border);
+  padding: 0.6rem 1.25rem; border-radius: 8px; cursor: pointer;
+}
+
+/* Issued certs table */
+.section-title { font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem; }
+.cert-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.cert-table th { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-align: left; padding: 0.75rem 1rem; background: var(--bg); border-bottom: 1px solid var(--border); }
+.cert-table td { font-size: 0.85rem; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); color: var(--ink2); }
+.cert-table tr:last-child td { border-bottom: none; }
+.cert-table tr:hover td { background: #FAFCFF; }
+.badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 100px; }
+.badge-valid { background: #D1FAE5; color: #059669; }
+.badge-revoked { background: #FEE2E2; color: #DC2626; }
+.mono { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--muted); }
+
+/* ── HOLDER PAGE ──────────────────────────────────── */
+.holder-hero {
+  background: var(--seal); border-radius: 14px; padding: 2rem;
+  display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;
+  color: white;
+}
+.holder-avatar {
+  width: 64px; height: 64px; background: var(--teal); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.75rem; flex-shrink: 0;
+}
+.holder-hero h2 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 4px; }
+.holder-hero p { color: #9DB8D4; font-size: 0.82rem; font-family: 'Courier New', monospace; }
+.holder-stats { display: flex; gap: 1.5rem; margin-left: auto; }
+.h-stat { text-align: center; }
+.h-stat .n { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--teal); }
+.h-stat .l { font-size: 0.7rem; color: #9DB8D4; }
+
+.certs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.cert-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 1px 6px rgba(15,25,35,0.04); transition: box-shadow 0.15s;
+}
+.cert-card:hover { box-shadow: 0 4px 16px rgba(15,25,35,0.1); }
+.cert-card-top {
+  background: linear-gradient(135deg, var(--seal), #2A5298);
+  padding: 1.25rem; display: flex; align-items: flex-start; justify-content: space-between;
+}
+.cert-card-top h4 { color: white; font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+.cert-card-top .cert-icon { font-size: 1.5rem; }
+.cert-card-body { padding: 1rem; }
+.cert-card-body .issuer { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.3rem; }
+.cert-card-body .issuer strong { color: var(--ink2); }
+.cert-card-body .date { font-size: 0.78rem; color: var(--muted); }
+.cert-card-footer { padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+.btn-share {
+  font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
+  background: var(--teal-lt); color: var(--teal); border: 1px solid #B2E4E3;
+  padding: 0.35rem 0.8rem; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.btn-share:hover { background: #CCF0EF; }
+
+/* ── DAO PAGE ────────────────────────────────────── */
+.dao-banner {
+  background: linear-gradient(135deg, #1E3A5F, #0E2442);
+  border-radius: 14px; padding: 1.75rem 2rem; margin-bottom: 2rem; color: white;
+  display: flex; align-items: center; gap: 2rem;
+}
+.dao-banner h2 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 0.3rem; }
+.dao-banner p { color: #9DB8D4; font-size: 0.85rem; line-height: 1.5; }
+.dao-stats { display: flex; gap: 1.5rem; margin-left: auto; flex-shrink: 0; }
+.d-stat { text-align: center; }
+.d-stat .n { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--teal); }
+.d-stat .l { font-size: 0.7rem; color: #9DB8D4; }
+
+.proposals-list { display: flex; flex-direction: column; gap: 1rem; }
+.proposal-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+}
+.proposal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.proposal-top h4 { font-size: 0.95rem; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.badge-voting { background: #EFF6FF; color: #2563EB; }
+.badge-passed { background: #D1FAE5; color: #059669; }
+.badge-executed { background: #D1FAE5; color: #047857; }
+.vote-row { display: flex; align-items: center; gap: 1rem; margin: 0.75rem 0; }
+.vote-bar-wrap { flex: 1; }
+.vote-bar-bg { height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.vote-bar-fill { height: 100%; background: var(--teal); border-radius: 100px; transition: width 0.4s; }
+.vote-counts { font-size: 0.75rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 3px; }
+.vote-for { color: var(--teal); }
+.vote-against { color: var(--red); }
+.proposal-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.9rem; }
+.proposal-actions { display: flex; gap: 0.6rem; }
+.btn-for {
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+  background: var(--teal-lt); color: var(--teal); border: 1px solid #B2E4E3;
+  padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.btn-for:hover { background: #CCF0EF; }
+.btn-against {
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+  background: #FEF2F2; color: var(--red); border: 1px solid #FCA5A5;
+  padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer;
+}
+.voted-label { font-size: 0.78rem; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; }
+
+/* ── SHARED ──────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 3rem; color: var(--muted);
+  border: 1.5px dashed var(--border); border-radius: 12px;
+}
+.empty-state .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+  background: var(--seal); color: white; border-radius: 10px;
+  padding: 0.85rem 1.25rem; font-size: 0.875rem;
+  box-shadow: 0 8px 24px rgba(15,25,35,0.2);
+  display: flex; align-items: center; gap: 0.6rem;
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .cert-meta-grid { grid-template-columns: 1fr; }
+  .dao-stats, .holder-stats { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">
+    <div class="brand-icon">🎓</div>
+    CertChain
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('verify')">Verify</button>
+    <button class="nav-tab" onclick="showPage('issuer')">Issuer</button>
+    <button class="nav-tab" onclick="showPage('holder')">My Certificates</button>
+    <button class="nav-tab" onclick="showPage('dao')">Governance</button>
+  </div>
+  <div class="nav-right">
+    <span class="network-pill">Sepolia</span>
+    <button class="btn-wallet connected" id="walletBtn" onclick="toggleWallet()">0xA1b3...9f2E</button>
+  </div>
+</nav>
+
+<!-- ═══ VERIFY PAGE ═══════════════════════════════════ -->
+<div class="page active" id="pageVerify">
+  <div class="verify-hero">
+    <h1>Verify any certificate<br>in seconds</h1>
+    <p>Enter a certificate ID to instantly check its authenticity. No account needed.</p>
+  </div>
+
+  <div class="verify-box">
+    <label>Certificate ID (Token ID)</label>
+    <div class="verify-input-row">
+      <input type="text" id="certIdInput" placeholder="e.g. 42" />
+      <button class="btn-verify" onclick="verifyCert()">Verify</button>
+    </div>
+    <div class="verify-divider">or paste a share link</div>
+    <div class="verify-input-row">
+      <input type="text" placeholder="https://certchain.app/cert/42" style="flex:1"/>
+      <button class="btn-verify" onclick="verifyCert()">Go</button>
+    </div>
+
+    <div class="cert-result" id="certResult">
+      <div class="cert-result-header">
+        <div class="cert-seal">🎓</div>
+        <div>
+          <h3>Bachelor's Degree in Software Engineering</h3>
+          <span>Astana IT University</span>
+        </div>
+        <div class="status-valid">✓ Valid</div>
+      </div>
+      <div class="cert-result-body">
+        <div class="cert-meta-grid">
+          <div class="cert-meta-item">
+            <div class="meta-label">Recipient</div>
+            <div class="meta-value">Rakymov Alikhan</div>
+          </div>
+          <div class="cert-meta-item">
+            <div class="meta-label">Issue Date</div>
+            <div class="meta-value">June 15, 2026</div>
+          </div>
+          <div class="cert-meta-item">
+            <div class="meta-label">Issuer</div>
+            <div class="meta-value">Astana IT University</div>
+          </div>
+          <div class="cert-meta-item">
+            <div class="meta-label">Token ID</div>
+            <div class="meta-value">#42</div>
+          </div>
+          <div class="cert-meta-item" style="grid-column:1/-1">
+            <div class="meta-label">Issuer Address</div>
+            <div class="meta-value mono">0x332D6EF538c2298E7f98a818B30Af1C9cE08328C</div>
+          </div>
+        </div>
+      </div>
+      <div class="cert-result-footer">
+        <button class="btn-sm" onclick="showToast('Link copied to clipboard')">Share link</button>
+        <button class="btn-sm" onclick="showToast('Opened on Etherscan')">View on Etherscan</button>
+        <button class="btn-sm" onclick="showToast('PDF downloaded')">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="s-val">1,284</div><div class="s-lbl">Certificates issued</div></div>
+    <div class="stat-card"><div class="s-val">18</div><div class="s-lbl">Approved issuers</div></div>
+    <div class="stat-card"><div class="s-val">100%</div><div class="s-lbl">Tamper-proof</div></div>
+  </div>
+</div>
+
+<!-- ═══ ISSUER PAGE ═══════════════════════════════════ -->
+<div class="page" id="pageIssuer">
+  <div class="page-header">
+    <h2>Issuer Dashboard</h2>
+    <p>Issue new certificates and manage your issued credentials</p>
+  </div>
+
+  <div class="form-card">
+    <h3>Issue New Certificate</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Recipient Wallet Address</label>
+        <input type="text" placeholder="0x..." />
+      </div>
+      <div class="form-group">
+        <label>Recipient Full Name</label>
+        <input type="text" placeholder="e.g. Alikhan Rakymov" />
+      </div>
+      <div class="form-group">
+        <label>Certificate Title</label>
+        <input type="text" placeholder="e.g. Bachelor's Degree in Software Engineering" />
+      </div>
+      <div class="form-group">
+        <label>Issue Date</label>
+        <input type="date" />
+      </div>
+      <div class="form-group">
+        <label>Certificate Type</label>
+        <select>
+          <option>Academic Degree</option>
+          <option>Professional Certificate</option>
+          <option>Course Completion</option>
+          <option>Achievement Award</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Expiry Date (optional)</label>
+        <input type="date" />
+      </div>
+      <div class="form-group full">
+        <label>Additional Notes</label>
+        <textarea placeholder="Optional: GPA, honors, specialization..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost">Clear</button>
+      <button class="btn-primary" onclick="showToast('Certificate minted — Token #1285')">Mint Certificate</button>
+    </div>
+  </div>
+
+  <div class="section-title">Issued Certificates (4)</div>
+  <table class="cert-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Certificate</th>
+        <th>Recipient</th>
+        <th>Issued</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">#42</td>
+        <td>Bachelor's Degree in Software Engineering</td>
+        <td>Rakymov Alikhan</td>
+        <td>Jun 15, 2026</td>
+        <td><span class="badge badge-valid">Valid</span></td>
+        <td><button class="btn-sm" onclick="showToast('Revocation requires confirmation')">Revoke</button></td>
+      </tr>
+      <tr>
+        <td class="mono">#41</td>
+        <td>Professional Certificate in Data Science</td>
+        <td>Nurasyl Abdigali</td>
+        <td>Jun 14, 2026</td>
+        <td><span class="badge badge-valid">Valid</span></td>
+        <td><button class="btn-sm" onclick="showToast('Revocation requires confirmation')">Revoke</button></td>
+      </tr>
+      <tr>
+        <td class="mono">#38</td>
+        <td>Bachelor's Degree in Computer Science</td>
+        <td>Alan Myrzatai</td>
+        <td>Jun 10, 2026</td>
+        <td><span class="badge badge-valid">Valid</span></td>
+        <td><button class="btn-sm" onclick="showToast('Revocation requires confirmation')">Revoke</button></td>
+      </tr>
+      <tr>
+        <td class="mono">#31</td>
+        <td>Course Completion — Blockchain Development</td>
+        <td>Test User</td>
+        <td>May 2, 2026</td>
+        <td><span class="badge badge-revoked">Revoked</span></td>
+        <td><button class="btn-sm" style="opacity:0.4;cursor:default">Revoke</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ HOLDER PAGE ═══════════════════════════════════ -->
+<div class="page" id="pageHolder">
+  <div class="holder-hero">
+    <div class="holder-avatar">👤</div>
+    <div>
+      <h2>Rakymov Alikhan</h2>
+      <p>0xA1b3...9f2E · SE-2413</p>
+    </div>
+    <div class="holder-stats">
+      <div class="h-stat"><div class="n">3</div><div class="l">Certificates</div></div>
+      <div class="h-stat"><div class="n">2</div><div class="l">Issuers</div></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:1rem">My Certificates</div>
+  <div class="certs-grid">
+    <div class="cert-card">
+      <div class="cert-card-top">
+        <h4>Bachelor's Degree in Software Engineering</h4>
+        <span class="cert-icon">🎓</span>
+      </div>
+      <div class="cert-card-body">
+        <div class="issuer">Issued by <strong>Astana IT University</strong></div>
+        <div class="date">June 15, 2026 &nbsp;·&nbsp; Token #42</div>
+      </div>
+      <div class="cert-card-footer">
+        <span class="badge badge-valid">Valid</span>
+        <button class="btn-share" onclick="showToast('Verification link copied!')">Share</button>
+        <button class="btn-sm" onclick="showToast('Opened on Etherscan')">Etherscan</button>
+      </div>
+    </div>
+
+    <div class="cert-card">
+      <div class="cert-card-top" style="background: linear-gradient(135deg, #0C4A6E, #0369A1)">
+        <h4>Blockchain Development Fundamentals</h4>
+        <span class="cert-icon">⛓️</span>
+      </div>
+      <div class="cert-card-body">
+        <div class="issuer">Issued by <strong>Coursera / AITU</strong></div>
+        <div class="date">March 20, 2026 &nbsp;·&nbsp; Token #17</div>
+      </div>
+      <div class="cert-card-footer">
+        <span class="badge badge-valid">Valid</span>
+        <button class="btn-share" onclick="showToast('Verification link copied!')">Share</button>
+        <button class="btn-sm" onclick="showToast('Opened on Etherscan')">Etherscan</button>
+      </div>
+    </div>
+
+    <div class="cert-card">
+      <div class="cert-card-top" style="background: linear-gradient(135deg, #1F2937, #374151)">
+        <h4>English Proficiency — IELTS 7.5</h4>
+        <span class="cert-icon">📜</span>
+      </div>
+      <div class="cert-card-body">
+        <div class="issuer">Issued by <strong>British Council</strong></div>
+        <div class="date">October 1, 2025 &nbsp;·&nbsp; Token #9</div>
+      </div>
+      <div class="cert-card-footer">
+        <span class="badge badge-valid">Valid</span>
+        <button class="btn-share" onclick="showToast('Verification link copied!')">Share</button>
+        <button class="btn-sm" onclick="showToast('Opened on Etherscan')">Etherscan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DAO PAGE ═══════════════════════════════════ -->
+<div class="page" id="pageDAO">
+  <div class="dao-banner">
+    <div>
+      <h2>Governance</h2>
+      <p>Vote on issuer registration proposals.<br>Only approved organizations can issue certificates.</p>
+    </div>
+    <div class="dao-stats">
+      <div class="d-stat"><div class="n">3</div><div class="l">Proposals</div></div>
+      <div class="d-stat"><div class="n">2</div><div class="l">Active</div></div>
+      <div class="d-stat"><div class="n">18</div><div class="l">Issuers</div></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:1rem">Active Proposals</div>
+  <div class="proposals-list">
+
+    <div class="proposal-card">
+      <div class="proposal-top">
+        <div>
+          <h4>Register: Nazarbayev University as an approved issuer</h4>
+          <div class="proposal-meta">Proposed by 0x7a3f...c12E &nbsp;·&nbsp; Voting ends Oct 25, 2026</div>
+        </div>
+        <span class="badge badge-voting">Voting</span>
+      </div>
+      <div class="vote-row">
+        <div class="vote-bar-wrap">
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:73%"></div></div>
+          <div class="vote-counts"><span class="vote-for">For: 8 (73%)</span><span class="vote-against">Against: 3 (27%)</span></div>
+        </div>
+      </div>
+      <div class="proposal-actions">
+        <button class="btn-for" onclick="showToast('Vote FOR submitted!')">👍 Vote For</button>
+        <button class="btn-against" onclick="showToast('Vote AGAINST submitted!')">👎 Vote Against</button>
+      </div>
+    </div>
+
+    <div class="proposal-card">
+      <div class="proposal-top">
+        <div>
+          <h4>Register: Udemy Kazakhstan as an approved issuer</h4>
+          <div class="proposal-meta">Proposed by 0x4b2c...881A &nbsp;·&nbsp; Voting ends Oct 27, 2026</div>
+        </div>
+        <span class="badge badge-voting">Voting</span>
+      </div>
+      <div class="vote-row">
+        <div class="vote-bar-wrap">
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:40%"></div></div>
+          <div class="vote-counts"><span class="vote-for">For: 4 (40%)</span><span class="vote-against">Against: 6 (60%)</span></div>
+        </div>
+      </div>
+      <div class="proposal-actions">
+        <button class="btn-for" onclick="showToast('Vote FOR submitted!')">👍 Vote For</button>
+        <button class="btn-against" onclick="showToast('Vote AGAINST submitted!')">👎 Vote Against</button>
+      </div>
+    </div>
+
+    <div class="proposal-card" style="opacity:0.7">
+      <div class="proposal-top">
+        <div>
+          <h4>Register: Astana IT University as an approved issuer</h4>
+          <div class="proposal-meta">Proposed by 0x332D...328C &nbsp;·&nbsp; Executed Oct 10, 2026</div>
+        </div>
+        <span class="badge badge-executed">Executed</span>
+      </div>
+      <div class="vote-row">
+        <div class="vote-bar-wrap">
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:100%"></div></div>
+          <div class="vote-counts"><span class="vote-for">For: 12 (100%)</span><span class="vote-against">Against: 0 (0%)</span></div>
+        </div>
+      </div>
+      <div class="proposal-actions">
+        <span class="voted-label">✓ Executed — AITU is now an approved issuer</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function verifyCert() {
+  const val = document.getElementById('certIdInput').value.trim();
+  const result = document.getElementById('certResult');
+  if (val === '' || val === '0') {
+    showToast('Please enter a certificate ID');
+    return;
+  }
+  result.classList.add('show');
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  showToast('Certificate verified on-chain ✓');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function toggleWallet() {
+  showToast('Already connected: 0xA1b3...9f2E');
+}
+
+// Demo: auto-show cert result when typing 42
+document.getElementById('certIdInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') verifyCert();
+});
+</script>
+</body>
+</html>
